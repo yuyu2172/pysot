@@ -23,6 +23,7 @@ ANCHOR:
     SCALES: [8]
     ANCHOR_NUM: 5
 
+
 TRACK:
     TYPE: 'pysot.tracker.siamrpn_tracker.SiamRPNTracker'
     PENALTY_K: 0.05

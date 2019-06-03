@@ -24,6 +24,7 @@ class SiamRPNTracker(SiameseTracker):
         self.score_size = (cfg.TRACK.INSTANCE_SIZE - cfg.TRACK.EXEMPLAR_SIZE) // \
                 cfg.ANCHOR.STRIDE + 1 + cfg.TRACK.BASE_SIZE
         self.anchor_num = len(cfg.ANCHOR.RATIOS) * len(cfg.ANCHOR.SCALES)
+
         hanning = np.hanning(self.score_size)
         window = np.outer(hanning, hanning)
         self.window = np.tile(window.flatten(), self.anchor_num)
@@ -92,6 +93,7 @@ class SiamRPNTracker(SiameseTracker):
         # get crop
         z_crop = self.get_subwindow(img, self.center_pos, 
                 cfg.TRACK.EXEMPLAR_SIZE, s_z, self.channel_average)
+        np.save('z_crop.npy', z_crop.detach().cpu().numpy())
         self.model.template(z_crop)
 
 
@@ -110,7 +112,13 @@ class SiamRPNTracker(SiameseTracker):
         x_crop = self.get_subwindow(img, self.center_pos, cfg.TRACK.INSTANCE_SIZE,
                 round(s_x), self.channel_average)
        
+        np.save('x_crop.npy', x_crop.detach().cpu().numpy())
         outputs = self.model.track(x_crop)
+        np.savez(
+            'x_crop.npz',
+            x_crop=x_crop.detach().cpu().numpy(),
+            conf=outputs['cls'].detach().cpu().numpy(),
+            loc=outputs['loc'].detach().cpu().numpy())
         score = self._convert_score(outputs['cls'])
         pred_bbox = self._convert_bbox(outputs['loc'], self.anchors)
         

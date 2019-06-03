@@ -52,7 +52,7 @@ def get_frames(video_name):
             yield frame
 
 
-def main():
+if __name__ == '__main__':
     # load config
     cfg.merge_from_file(args.config)
     cfg.CUDA = torch.cuda.is_available()
@@ -68,6 +68,15 @@ def main():
 
     # build tracker
     tracker = build_tracker(model)
+    # init_frame = np.load('../chainer-pysot/init.npz')['frame']
+    # init_rect = np.load('../chainer-pysot/init.npz')['init_rect']
+    # second_frame = np.load('../chainer-pysot/output.npz')['second_frame']
+
+    # tracker.init(init_frame, init_rect)
+    # np.savez('../chainer-pysot/init.npz',
+    #     frame=init_frame, zfs=[f.detach().cpu().numpy() for f in tracker.model.zf], init_rect=init_rect)
+    # tracker.track(second_frame)
+    # raise ValueError
 
     first_frame = True
     if args.video_name:
@@ -82,9 +91,12 @@ def main():
             except:
                 exit()
             tracker.init(frame, init_rect)
+            np.savez('init.npz', frame=frame, init_rect=init_rect, zfs=tracker.model.zfs)
             first_frame = False
         else:
             outputs = tracker.track(frame)
+            # np.savez('output.npz', outputs=outputs, second_frame=frame)
+            # raise ValueError
             if 'polygon' in outputs:
                 polygon = np.array(outputs['polygon']).astype(np.int32)
                 cv2.polylines(frame, [polygon.reshape((-1,1,2))], True, (0,255,0),3)
@@ -97,6 +109,3 @@ def main():
                         (bbox[0]+bbox[2], bbox[1]+bbox[3]), (0,255,0),3)
             cv2.imshow(video_name, frame)
             cv2.waitKey(40)
-
-if __name__ == '__main__':
-    main()
